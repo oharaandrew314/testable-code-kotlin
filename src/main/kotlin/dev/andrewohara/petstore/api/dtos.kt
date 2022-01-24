@@ -9,7 +9,7 @@ data class PetDto(
 )
 
 fun Pet.toDto() = PetDto(
-    id = id.value,
+    id = id,
     name = name,
     photoUrls = photoUrls
 )

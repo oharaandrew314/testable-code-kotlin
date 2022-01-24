@@ -1,12 +1,12 @@
 package dev.andrewohara.petstore.pets
 
-import dev.andrewohara.petstore.images.ImageService
+import dev.andrewohara.petstore.images.thirdparty.ThirdPartyImageClient
 import java.io.InputStream
 import java.lang.IllegalStateException
 
-class PetService(private val pets: PetsDao, private val images: ImageService) {
+class PetService(private val pets: PetsDao, private val images: ThirdPartyImageClient) {
 
-    fun get(id: Pet.Id): Pet? {
+    fun get(id: Long): Pet? {
         return pets[id]
     }
 
@@ -15,11 +15,11 @@ class PetService(private val pets: PetsDao, private val images: ImageService) {
         return pets[id] ?: throw IllegalStateException("Pet was not created")
     }
 
-    fun uploadImage(petId: Pet.Id, contentType: String, content: InputStream): Pet? {
+    fun uploadImage(petId: Long, contentType: String, content: InputStream): Pet? {
         pets[petId] ?: return null
 
-        val photoRef = images.uploadImage(contentType, content) ?: return null
-        pets.addImage(petId, photoRef.url)
+        val url = images.upload(contentType, content) ?: return null
+        pets.addImage(petId, url)
 
         return pets[petId]
     }

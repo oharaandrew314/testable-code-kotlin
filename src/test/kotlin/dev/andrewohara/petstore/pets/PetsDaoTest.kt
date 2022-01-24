@@ -9,7 +9,7 @@ class PetsDaoTest {
 
     @Test
     fun `get missing`() {
-        testObj[Pet.Id(123)] shouldBe null
+        testObj[123] shouldBe null
     }
 
     @Test

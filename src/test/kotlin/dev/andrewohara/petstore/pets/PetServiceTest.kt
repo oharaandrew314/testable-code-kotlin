@@ -1,11 +1,11 @@
 package dev.andrewohara.petstore.pets
 
-import dev.andrewohara.petstore.images.ImageService
 import dev.andrewohara.petstore.images.thirdparty.FakeThirdPartyImageBackend
 import dev.andrewohara.petstore.images.thirdparty.ThirdPartyImageClient
 import dev.andrewohara.petstore.images.thirdparty.ThirdPartyImageDto
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 
@@ -16,14 +16,12 @@ class PetServiceTest {
 
     private val testObj = PetService(
         pets = petsDao,
-        images = ImageService(
-            client = ThirdPartyImageClient(thirdPartyImageBackend)
-        )
+        images = ThirdPartyImageClient(thirdPartyImageBackend)
     )
 
     @Test
     fun `get missing pet`() {
-        testObj.get(Pet.Id(123)) shouldBe null
+        testObj.get(123) shouldBe null
     }
 
     @Test
@@ -60,6 +58,10 @@ class PetServiceTest {
             name = "Tigger",
             photoUrls = listOf("http://images.fake/image0")
         )
+
+        // test side-effect on the pets dao
+        petsDao[id].shouldNotBeNull()
+            .photoUrls.shouldContainExactly("http://images.fake/image0")
 
         // test side-effect on the image repo
         thirdPartyImageBackend.images.shouldContainExactly(

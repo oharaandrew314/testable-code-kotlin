@@ -2,7 +2,6 @@ package dev.andrewohara.petstore
 
 import com.mysql.cj.jdbc.MysqlDataSource
 import dev.andrewohara.petstore.api.RestApi
-import dev.andrewohara.petstore.images.ImageService
 import dev.andrewohara.petstore.images.thirdparty.ThirdPartyImageClient
 import dev.andrewohara.petstore.pets.PetService
 import dev.andrewohara.petstore.pets.PetsDao
@@ -15,6 +14,8 @@ import org.http4k.server.asServer
 
 fun main() {
     val imagesHost = System.getenv("IMAGES_HOST")
+    val imagesApiKey = System.getenv("IMAGES_API_KEY")
+
     val dbHost = System.getenv("DB_HOST")
     val dbUser = System.getenv("DB_USER")
     val dbPass = System.getenv("DB_PASS")
@@ -28,12 +29,13 @@ fun main() {
     }
 
     val thirdPartyImagesClient = ClientFilters.SetHostFrom(Uri.of(imagesHost))
+        .then(ClientFilters.BearerAuth(imagesApiKey))
         .then(JavaHttpClient())
         .let { ThirdPartyImageClient(it) }
 
     val petService = PetService(
         pets = PetsDao(dataSource),
-        images = ImageService(client = thirdPartyImagesClient)
+        images = thirdPartyImagesClient
     )
 
     RestApi(petService)

@@ -17,16 +17,16 @@ class PetsDao(private val dataSource: DataSource) {
         const val insertImage = "INSERT INTO photos(pet_id, url) VALUES (?, ?)"
     }
 
-    operator fun get(id: Pet.Id): Pet? {
+    operator fun get(id: Long): Pet? {
         dataSource.connection.use { conn ->
             conn.prepareStatement(Sql.get).use { stmt ->
-                stmt.setLong(1, id.value)
+                stmt.setLong(1, id)
 
                 stmt.executeQuery().use { rs ->
                     if (!rs.next()) return null
 
                     return Pet(
-                        id = Pet.Id(rs.getLong("id")),
+                        id = rs.getLong("id"),
                         name = rs.getString("name"),
                         photoUrls = rs.getString("photo_urls")
                             ?.split(",")
@@ -37,7 +37,7 @@ class PetsDao(private val dataSource: DataSource) {
         }
     }
 
-    fun create(name: String): Pet.Id {
+    fun create(name: String): Long {
         dataSource.connection.use { conn ->
             conn.prepareStatement(Sql.insertPet, arrayOf("id")).use { stmt ->
                 stmt.setString(1, name)
@@ -46,16 +46,16 @@ class PetsDao(private val dataSource: DataSource) {
 
                 stmt.generatedKeys.use { rs ->
                     if (!rs.next()) throw IOException("Failed to create pet")
-                    return Pet.Id(rs.getLong("id"))
+                    return rs.getLong("id")
                 }
             }
         }
     }
 
-    fun addImage(petId: Pet.Id, url: String) {
+    fun addImage(petId: Long, url: String) {
         dataSource.connection.use { conn ->
             conn.prepareStatement(Sql.insertImage).use { stmt ->
-                stmt.setLong(1, petId.value)
+                stmt.setLong(1, petId)
                 stmt.setString(2, url)
 
                 stmt.executeUpdate()

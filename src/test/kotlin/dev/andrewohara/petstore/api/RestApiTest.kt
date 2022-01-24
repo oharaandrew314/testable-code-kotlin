@@ -1,6 +1,5 @@
 package dev.andrewohara.petstore.api
 
-import dev.andrewohara.petstore.images.ImageService
 import dev.andrewohara.petstore.images.thirdparty.FakeThirdPartyImageBackend
 import dev.andrewohara.petstore.images.thirdparty.ThirdPartyImageClient
 import dev.andrewohara.petstore.images.thirdparty.ThirdPartyImageDto
@@ -22,17 +21,15 @@ class RestApiTest {
     private val imageBackend = FakeThirdPartyImageBackend()
     private val petService = PetService(
         pets = PetsDao.mock(),
-        images = ImageService(
-            client = ThirdPartyImageClient(imageBackend)
-        )
+        images = ThirdPartyImageClient(imageBackend)
     )
 
     private val testObj = RestApi(petService).toHttpHandler()
 
     @Test
     fun `get missing pet`() {
-        val response = Request(Method.GET, RestApi.Paths.pet)
-            .with(RestApi.Lenses.petId of 123)
+        val response = Request(Method.GET, RestApi.petPath)
+            .with(RestApi.petIdLens of 123)
             .let(testObj)
 
         response shouldHaveStatus Status.NOT_FOUND
@@ -42,14 +39,14 @@ class RestApiTest {
     fun `get pet`() {
         val pet = petService.create("Smokie")
 
-        val response = Request(Method.GET, RestApi.Paths.pet)
-            .with(RestApi.Lenses.petId of pet.id.value)
+        val response = Request(Method.GET, RestApi.petPath)
+            .with(RestApi.petIdLens of pet.id)
             .let(testObj)
 
         response shouldHaveStatus Status.OK
 
-        response.shouldHaveBody(RestApi.Lenses.pet, be(PetDto(
-            id = pet.id.value,
+        response.shouldHaveBody(RestApi.petLens, be(PetDto(
+            id = pet.id,
             name = "Smokie",
             photoUrls = emptyList()
         )))
@@ -57,7 +54,7 @@ class RestApiTest {
 
     @Test
     fun `create pet with empty body`() {
-        val response = Request(Method.POST, RestApi.Paths.pets)
+        val response = Request(Method.POST, RestApi.petsPath)
             .let(testObj)
 
         response shouldHaveStatus Status.BAD_REQUEST
@@ -65,19 +62,19 @@ class RestApiTest {
 
     @Test
     fun `create pet`() {
-        val response = Request(Method.POST, RestApi.Paths.pets)
-            .with(RestApi.Lenses.petCreate of PetCreateDto(name = "Tigger"))
+        val response = Request(Method.POST, RestApi.petsPath)
+            .with(RestApi.petCreateLens of PetCreateDto(name = "Tigger"))
             .let(testObj)
 
         response shouldHaveStatus Status.OK
 
         // test response body
-        val created = RestApi.Lenses.pet(response)
+        val created = RestApi.petLens(response)
         created.name shouldBe "Tigger"
 
         // test side effects
-        petService.get(Pet.Id(created.id)) shouldBe Pet(
-            id = Pet.Id(created.id),
+        petService.get(created.id) shouldBe Pet(
+            id = created.id,
             name = "Tigger",
             photoUrls = emptyList()
         )
@@ -87,8 +84,8 @@ class RestApiTest {
     fun `upload image for missing pet`() {
         val content = "I'm not a real png".toByteArray()
 
-        val response = Request(Method.POST, RestApi.Paths.uploadImage)
-            .with(RestApi.Lenses.petId of 123)
+        val response = Request(Method.POST, RestApi.uploadImagePath)
+            .with(RestApi.petIdLens of 123)
             .with(Header.CONTENT_TYPE of ContentType("image/png"))
             .body(content.inputStream())
             .let(testObj)
@@ -102,15 +99,15 @@ class RestApiTest {
 
         val content = "I'm not a real png".toByteArray()
 
-        val response = Request(Method.POST, RestApi.Paths.uploadImage)
-            .with(RestApi.Lenses.petId of pet.id.value)
+        val response = Request(Method.POST, RestApi.uploadImagePath)
+            .with(RestApi.petIdLens of pet.id)
             .with(Header.CONTENT_TYPE of ContentType("image/png"))
             .body(content.inputStream())
             .let(testObj)
 
         response shouldHaveStatus Status.OK
-        response.shouldHaveBody(RestApi.Lenses.pet, be(PetDto(
-            id = pet.id.value,
+        response.shouldHaveBody(RestApi.petLens, be(PetDto(
+            id = pet.id,
             name = "Bandit",
             photoUrls = listOf("http://images.fake/image0")
         )))
