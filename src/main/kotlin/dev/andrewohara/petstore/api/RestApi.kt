@@ -3,7 +3,7 @@ package dev.andrewohara.petstore.api
 import dev.andrewohara.petstore.pets.PetService
 import org.http4k.core.*
 import org.http4k.filter.ServerFilters
-import org.http4k.format.Jackson
+import org.http4k.format.Jackson.auto
 import org.http4k.lens.Header
 import org.http4k.lens.Path
 import org.http4k.lens.long
@@ -14,8 +14,8 @@ class RestApi(private val pets: PetService) {
 
     companion object {
         val petIdLens = Path.long().of("petId")
-        val petLens = Jackson.autoBody<PetDto>().toLens()
-        val petCreateLens = Jackson.autoBody<PetCreateDto>().toLens()
+        val petLens = Body.auto<PetDto>().toLens()
+        val petCreateLens = Body.auto<PetCreateDto>().toLens()
 
         const val petsPath = "/pet"
         val petPath = "/pet/${petIdLens}"

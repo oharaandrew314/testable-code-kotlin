@@ -1,7 +1,7 @@
 package dev.andrewohara.petstore.images.thirdparty
 
 import org.http4k.core.*
-import org.http4k.format.Jackson
+import org.http4k.format.Jackson.auto
 import org.http4k.lens.Header
 import java.io.IOException
 import java.io.InputStream
@@ -10,7 +10,7 @@ class ThirdPartyImageClient(private val backend: HttpHandler) {
 
     companion object {
         const val uploadPath = "/v1/images"
-        val imageBody = Jackson.autoBody<ThirdPartyImageDto>().toLens()
+        val imageBody = Body.auto<ThirdPartyImageDto>().toLens()
     }
 
     fun upload(contentType: String, content: InputStream): String? {
