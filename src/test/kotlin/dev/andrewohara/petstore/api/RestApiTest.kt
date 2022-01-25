@@ -45,7 +45,7 @@ class RestApiTest {
 
         response shouldHaveStatus Status.OK
 
-        response.shouldHaveBody(RestApi.petLens, be(PetDto(
+        response.shouldHaveBody(RestApi.petLens, be(Pet(
             id = pet.id,
             name = "Smokie",
             photoUrls = emptyList()
@@ -63,7 +63,7 @@ class RestApiTest {
     @Test
     fun `create pet`() {
         val response = Request(Method.POST, RestApi.petsPath)
-            .with(RestApi.petCreateLens of PetCreateDto(name = "Tigger"))
+            .with(RestApi.nameLens of "Tigger")
             .let(testObj)
 
         response shouldHaveStatus Status.OK
@@ -106,7 +106,7 @@ class RestApiTest {
             .let(testObj)
 
         response shouldHaveStatus Status.OK
-        response.shouldHaveBody(RestApi.petLens, be(PetDto(
+        response.shouldHaveBody(RestApi.petLens, be(Pet(
             id = pet.id,
             name = "Bandit",
             photoUrls = listOf("http://images.fake/image0")

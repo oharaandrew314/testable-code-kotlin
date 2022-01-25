@@ -1,12 +1,11 @@
 package dev.andrewohara.petstore.api
 
+import dev.andrewohara.petstore.pets.Pet
 import dev.andrewohara.petstore.pets.PetService
 import org.http4k.core.*
 import org.http4k.filter.ServerFilters
 import org.http4k.format.Jackson.auto
-import org.http4k.lens.Header
-import org.http4k.lens.Path
-import org.http4k.lens.long
+import org.http4k.lens.*
 import org.http4k.routing.bind
 import org.http4k.routing.routes
 
@@ -14,8 +13,8 @@ class RestApi(private val pets: PetService) {
 
     companion object {
         val petIdLens = Path.long().of("petId")
-        val petLens = Body.auto<PetDto>().toLens()
-        val petCreateLens = Body.auto<PetCreateDto>().toLens()
+        val petLens = Body.auto<Pet>().toLens()
+        val nameLens = Query.nonEmptyString().required("name")
 
         const val petsPath = "/pet"
         val petPath = "/pet/${petIdLens}"
@@ -26,15 +25,15 @@ class RestApi(private val pets: PetService) {
         val id = petIdLens(request)
         val pet = pets.get(id) ?: return Response(Status.NOT_FOUND)
 
-        return Response(Status.OK).with(petLens of pet.toDto())
+        return Response(Status.OK).with(petLens of pet)
     }
 
     private fun createPet(request: Request): Response {
-        val data = petCreateLens(request)
+        val name = nameLens(request)
 
-        val pet = pets.create(name = data.name)
+        val pet = pets.create(name = name)
 
-        return Response(Status.OK).with(petLens of pet.toDto())
+        return Response(Status.OK).with(petLens of pet)
     }
 
     private fun uploadImage(request: Request): Response {
@@ -45,7 +44,7 @@ class RestApi(private val pets: PetService) {
             pets.uploadImage(petId, contentType.value, body.stream)
         } ?: return Response(Status.NOT_FOUND)
 
-        return Response(Status.OK).with(petLens of updatedPet.toDto())
+        return Response(Status.OK).with(petLens of updatedPet)
     }
 
     fun toHttpHandler() : HttpHandler {
